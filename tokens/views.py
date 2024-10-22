@@ -7,7 +7,7 @@ from .serializers import TokenSerializer
 import random
 import string
 from .pagination import TokenPagination
-from web3.exceptions import ProviderConnectionError
+from web3.exceptions import ProviderConnectionError, TimeExhausted
 
 
 @api_view(['POST'])
@@ -45,6 +45,8 @@ def create(request):
         
     except ProviderConnectionError as e:
         return Response({"error": f"Failed to connect to provider: {str(e)}"}, status=500)
+    except TimeExhausted as e:
+        return Response({"error": f"Transaction timed out: {str(e)}"}, status=500)
     except Exception as e:
         return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
