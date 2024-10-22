@@ -6,7 +6,7 @@ from .models import Token
 from .serializers import TokenSerializer
 import random
 import string
-
+from .pagination import TokenPagination
 
 @api_view(['POST'])
 def create(request):
@@ -19,11 +19,7 @@ def create(request):
         unique_hash=unique_hash
     )
     token.save()
-    provider_url = settings.PROVIDER_URL
-    w3 = Web3(Web3.HTTPProvider(provider_url))
-    address = settings.CONTRACT_ADDRESS
-    abi = settings.CONTRACT_ABI
-    contract_instance = w3.eth.contract(address=address, abi=abi)
+    w3, contract_instance = get_contract()
     private_key = settings.PRIVATE_KEY
     sender_address = w3.eth.account.from_key(private_key).address
     nonce = w3.eth.get_transaction_count(sender_address)
@@ -49,11 +45,7 @@ def create(request):
 
 @api_view(['GET'])
 def total_supply(request):
-    provider_url = settings.PROVIDER_URL
-    w3 = Web3(Web3.HTTPProvider(provider_url))
-    address = settings.CONTRACT_ADDRESS
-    abi = settings.CONTRACT_ABI
-    contract_instance = w3.eth.contract(address=address, abi=abi)
+    _, contract_instance = get_contract()
     totalSupply = contract_instance.functions.totalSupply().call()
     response_data = {'totalSupply': totalSupply}
     return Response(response_data)    
@@ -61,5 +53,16 @@ def total_supply(request):
 @api_view(['GET'])
 def list_tokens(request):
     tokens = Token.objects.all()
-    serializer = TokenSerializer(tokens, many=True)
-    return Response(serializer.data)
+    paginator = TokenPagination()
+    result_page = paginator.paginate_queryset(tokens, request)
+    serializer = TokenSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+
+
+def get_contract():
+    provider_url = settings.PROVIDER_URL
+    w3 = Web3(Web3.HTTPProvider(provider_url))
+    address = settings.CONTRACT_ADDRESS
+    abi = settings.CONTRACT_ABI
+    return w3, w3.eth.contract(address=address, abi=abi)
