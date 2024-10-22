@@ -12,8 +12,8 @@ from web3.exceptions import ProviderConnectionError
 
 @api_view(['POST'])
 def create(request):
-    owner = request.data.get('owner')
-    media_url = request.data.get('media_url')
+    owner = request.query_params.get('owner')
+    media_url = request.query_params.get('media_url')
     if not owner or not media_url:
         return Response({"error": "Owner and media_url are required fields."}, status=400)
     
@@ -44,7 +44,7 @@ def create(request):
         w3.eth.wait_for_transaction_receipt(tx_hash)
         
     except ProviderConnectionError as e:
-        return Response({"error": f"Failed to connect to provider: {str(e)}"}, status=500)        
+        return Response({"error": f"Failed to connect to provider: {str(e)}"}, status=500)
     except Exception as e:
         return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
