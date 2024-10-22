@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.core.serializers',
     'rest_framework',
+    'drf_yasg',
     'tokens',
 ]
 

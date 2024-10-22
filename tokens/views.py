@@ -8,8 +8,23 @@ import random
 import string
 from .pagination import TokenPagination
 from web3.exceptions import ProviderConnectionError, TimeExhausted
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi 
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new token",
+    manual_parameters=[
+        openapi.Parameter('owner', openapi.IN_QUERY, description="Owner address", type=openapi.TYPE_STRING),
+        openapi.Parameter('media_url', openapi.IN_QUERY, description="URL of the media", type=openapi.TYPE_STRING),
+    ],
+    responses={
+        200: TokenSerializer, 
+        400: "Owner and media_url are required fields.", 
+        500: "An unexpected error occurred."
+    }
+)
 @api_view(['POST'])
 def create(request):
     owner = request.query_params.get('owner')
@@ -56,6 +71,14 @@ def create(request):
     serializer = TokenSerializer(token)
     return Response(serializer.data)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Get total supply of tokens",
+    responses={
+        200: openapi.Response(description="Total supply", examples={"application/json": {"totalSupply": 100}}),
+        500: "Failed to connect to provider or unexpected error"
+    }
+)
 @api_view(['GET'])
 def total_supply(request):
     try:
@@ -68,6 +91,11 @@ def total_supply(request):
     response_data = {'totalSupply': totalSupply}
     return Response(response_data)    
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Get a paginated list of tokens",
+    responses={200: TokenSerializer(many=True)}
+)
 @api_view(['GET'])
 def list_tokens(request):
     tokens = Token.objects.all()
